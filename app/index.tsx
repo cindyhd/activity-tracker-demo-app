@@ -2,7 +2,7 @@ import SignInWithGoogleButton from "@/components/SignInWithGoogleButton";
 import { ThemedText } from "@/components/ThemedText";
 import { useGoogleSignIn } from "@/hooks/useGoogleSignIn";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import { StatusBar, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 GoogleSignin.configure({
   webClientId: "YOUR_WEB_CLIENT_ID",
@@ -19,10 +19,9 @@ export default function Index() {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
+        backgroundColor: "#FFC4C4",
       }}
     >
-      <StatusBar barStyle="dark-content" />
-
       <View style={styles.contentContainer}>
         <View style={styles.titleContainer}>
           <ThemedText type="subtitle" style={styles.title}>

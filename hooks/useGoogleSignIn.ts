@@ -21,7 +21,7 @@ export const useGoogleSignIn = () => {
       console.log("RESPONSE", response);
       if (isSuccessResponse(response)) {
         setState({ userInfo: response.data });
-        router.push("/syncfitbit");
+        router.replace("/connectFitbit");
       } else {
         // sign in was cancelled by user
       }

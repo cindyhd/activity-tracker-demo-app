@@ -17,7 +17,7 @@ export default function SignInWithGoogleButton({
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          borderRadius: 10,
+          borderRadius: 8,
           backgroundColor: "#fff",
           borderWidth: 1,
           borderColor: "#ccc",

@@ -1,13 +1,15 @@
+import { ThemedText } from "@/components/ThemedText";
 import { useActivityStore } from "@/store/activity.store";
 import { useAuthStore } from "@/store/auth.store";
 import { useUIStore } from "@/store/ui.store";
 import * as AuthSession from "expo-auth-session";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Button,
-  ScrollView,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -17,11 +19,16 @@ const CLIENT_ID = "23TP8Y";
 const FITBIT_AUTH_URL = "https://www.fitbit.com/oauth2/authorize";
 const FITBIT_TOKEN_URL = "https://api.fitbit.com/oauth2/token";
 
-const redirectUri = AuthSession.makeRedirectUri({
-  scheme: "healthsyncfitbit", // bisa diganti sesuai app.json -> expo.scheme
+// use a cast to "any" so TypeScript doesn't complain about "useProxy" in some SDK types
+const redirectUri = (AuthSession as any).makeRedirectUri({
+  scheme: "healthsyncfitbit",
+  path: "auth",
+  // useProxy: true, // useProxy is used for development with Expo Go, then in html it will be onPress={() => promptAsync({ useProxy: true } as any)}
 });
 
-export default function SyncFitbit() {
+export default function ConnectFitbit() {
+  const router = useRouter();
+
   // Auth store
   const { providerTokens, setProviderToken } = useAuthStore();
   const accessToken = providerTokens.fitbit?.accessToken;
@@ -36,9 +43,9 @@ export default function SyncFitbit() {
   const [fitbitData, setFitbitData] = useState<any>(null);
   const [activityData, setActivityData] = useState<any>(null);
 
-  // 🔍 Debug: cek redirect URI (jalankan sekali saat mount untuk menghindari double log di StrictMode)
+  // Debug: cek redirect URI
   React.useEffect(() => {
-    console.log("👉 Redirect URI yang digunakan:", redirectUri);
+    console.log("Redirect URI yang digunakan:", redirectUri);
   }, []);
 
   // Monitor accessToken changes and log
@@ -58,6 +65,35 @@ export default function SyncFitbit() {
     { authorizationEndpoint: FITBIT_AUTH_URL }
   );
 
+  // Log OAuth URL saat request ready
+  React.useEffect(() => {
+    if (request) {
+      console.log("Request:", request);
+      console.log("Full OAuth URL:", request.url);
+      console.log("Redirect URI:", redirectUri);
+    }
+  }, [request]);
+
+  // Handle response errors dan cancel
+  useEffect(() => {
+    if (response) {
+      console.log("Response type:", response.type);
+
+      if (response.type === "error") {
+        console.error("Auth Error:", response.error);
+        setError("auth", response.error?.message || "Unknown error");
+        Alert.alert(
+          "Auth Error",
+          response.error?.message || "Unknown error occurred"
+        );
+        setLoading("auth", false);
+      } else if (response.type === "cancel") {
+        console.log("Auth cancelled by user");
+        setLoading("auth", false);
+      }
+    }
+  }, [response, setError, setLoading]);
+
   // Exchange the code for an access token
   useEffect(() => {
     const exchangeToken = async () => {
@@ -65,6 +101,7 @@ export default function SyncFitbit() {
         try {
           setLoading("auth", true);
           const code = response.params.code;
+          console.log("Authorization Code:", code);
 
           const body = new URLSearchParams({
             client_id: CLIENT_ID,
@@ -93,6 +130,7 @@ export default function SyncFitbit() {
               expiresAt: Date.now() + json.expires_in * 1000,
             });
             Alert.alert("Fitbit has been successfully connected!");
+            router.replace("/home"); // atau ganti ke rute dashboard, mis. "/home"
           } else {
             console.log("Failed to get access token:", json);
             setError("auth", JSON.stringify(json, null, 2));
@@ -171,16 +209,45 @@ export default function SyncFitbit() {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 20 }}>
-      <Text style={{ fontSize: 22, fontWeight: "bold", marginBottom: 10 }}>
-        Sync with Fitbit
-      </Text>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFC4C4",
+      }}
+    >
+      <View style={styles.contentContainer}>
+        <View style={styles.titleContainer}>
+          <ThemedText type="subtitle" style={styles.description}>
+            You need to connect your Fitbit account first {"\n"}
+            to display your daily activity data.{"\n"}
+          </ThemedText>
+        </View>
 
-      <Button
-        title="Connect to Fitbit"
-        onPress={() => promptAsync()}
-        disabled={!request || loading.auth}
-      />
+        <View style={styles.buttonContainer}>
+          <Pressable
+            onPress={() => promptAsync()}
+            disabled={!request || loading.auth}
+          >
+            <View
+              style={{
+                width: "100%",
+                height: 44,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 8,
+                backgroundColor: "#850E35",
+              }}
+            >
+              <ThemedText type="defaultSemiBold" lightColor="#fff">
+                Connect with Fitbit
+              </ThemedText>
+            </View>
+          </Pressable>
+        </View>
+      </View>
 
       {accessToken && (
         <View style={{ marginTop: 20 }}>
@@ -233,22 +300,27 @@ export default function SyncFitbit() {
           </Text>
         </View>
       )}
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
+  titleContainer: {
     alignItems: "center",
-    padding: 16,
+    gap: 12,
   },
-  title: {
-    fontSize: 24,
-    marginBottom: 32,
+  contentContainer: {
+    width: "100%",
+    gap: 32,
   },
   buttonContainer: {
     width: "75%",
+    gap: 12,
+    alignSelf: "center",
+  },
+  description: {
+    textAlign: "center",
+    fontSize: 18,
+    lineHeight: 24,
   },
 });
