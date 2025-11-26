@@ -27,11 +27,15 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1 }}>
         <StatusBar barStyle="dark-content" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        />
+        <Stack screenOptions={{ headerShown: false }}>
+          {/* Page without tab bar */}
+          <Stack.Screen name="index" />
+          <Stack.Screen name="auth" />
+          <Stack.Screen name="connectFitbit" />
+
+          {/* Page with tab bar */}
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack>
       </SafeAreaView>
     </SafeAreaProvider>
   );

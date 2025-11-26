@@ -9,7 +9,15 @@ export default function SignInWithGoogleButton({
   disabled?: boolean;
 }) {
   return (
-    <Pressable onPress={onPress} disabled={disabled}>
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        {
+          opacity: pressed ? 0.7 : 1, // 🔥 opacity saat ditekan
+        },
+      ]}
+    >
       <View
         style={{
           width: "100%",
